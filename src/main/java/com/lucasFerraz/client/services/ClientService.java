@@ -5,6 +5,8 @@ import java.util.Optional;
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.lucasFerraz.client.dto.ClientDTO;
 import com.lucasFerraz.client.entities.Client;
 import com.lucasFerraz.client.repositories.ClientRepository;
+import com.lucasFerraz.client.services.exceptions.DatabaseException;
 import com.lucasFerraz.client.services.exceptions.ResourceNotFoundException;
 
 @Service
@@ -56,6 +59,19 @@ public class ClientService {
 		}
 	}
 	
+	
+	public void delete(Long id) {
+		try {
+			repository.deleteById(id);
+		}catch(EmptyResultDataAccessException e){// caso deletar um id que não existe
+			throw new ResourceNotFoundException("id não encontrado" + id);
+		}catch(DataIntegrityViolationException e) {
+			throw new DatabaseException("Violação de integridade");
+		}
+		
+	}
+
+	
 	private void copyClientDtoToEntity(ClientDTO dto, Client entity) {
 		entity.setName(dto.getName());
 		entity.setCpf(dto.getCpf());
@@ -64,5 +80,6 @@ public class ClientService {
 		entity.setChildren(dto.getChildren());
 	}
 
+	
 	
 }
