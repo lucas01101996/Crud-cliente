@@ -2,6 +2,8 @@ package com.lucasFerraz.client.services;
 
 import java.util.Optional;
 
+import javax.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.lucasFerraz.client.dto.ClientDTO;
 import com.lucasFerraz.client.entities.Client;
 import com.lucasFerraz.client.repositories.ClientRepository;
-import com.lucasFerraz.client.services.exceptions.EntityNotFoundException;
+import com.lucasFerraz.client.services.exceptions.ResourceNotFoundException;
 
 @Service
 public class ClientService {
@@ -29,7 +31,7 @@ public class ClientService {
 	@Transactional(readOnly = true)
 	public ClientDTO findById(Long id) {
 		Optional<Client> obj = repository.findById(id);
-		Client entity = obj.orElseThrow(() -> new EntityNotFoundException("Entidade não encontrada"));
+		Client entity = obj.orElseThrow(() -> new ResourceNotFoundException("Entidade não encontrada"));
 		return new ClientDTO(entity);
 	}
 	
@@ -42,6 +44,18 @@ public class ClientService {
 		return new ClientDTO(entity);
 	}
 	
+	@Transactional
+	public ClientDTO update(Long id, ClientDTO dto) {
+		try {
+			Client entity = repository.getOne(id);
+			copyClientDtoToEntity(dto, entity);
+			entity = repository.save(entity);
+			return new ClientDTO(entity);
+		}catch(EntityNotFoundException e) {
+			throw new ResourceNotFoundException("Id não encontrado" + id);
+		}
+	}
+	
 	private void copyClientDtoToEntity(ClientDTO dto, Client entity) {
 		entity.setName(dto.getName());
 		entity.setCpf(dto.getCpf());
@@ -49,4 +63,6 @@ public class ClientService {
 		entity.setIncome(dto.getIncome());
 		entity.setChildren(dto.getChildren());
 	}
+
+	
 }
